@@ -1,13 +1,14 @@
-﻿using System;
+﻿
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Microsoft.ML;
-using Microsoft.ML.Legacy;
-using Microsoft.ML.Legacy.Models;
-using Microsoft.ML.Legacy.Trainers;
 using Microsoft.ML.Runtime.Api;
 using Microsoft.ML.Runtime.Data;
-using Microsoft.ML.Transforms;
 using Microsoft.ML.Trainers;
+using AnomalyDetection.Train.DataModels;
+using AnomalyDetection.Train.Helpers;
+using System;
 
 namespace AnomalyDetection.Train
 {
@@ -15,7 +16,14 @@ namespace AnomalyDetection.Train
     {
         static void Main(string[] args)
         {
-            var dataPath = @"Data/creditcard.csv";
+            var Path = @"Data/";
+            var dataPath = $"Data/creditcard.csv";
+
+
+            if (!File.Exists(dataPath)) {
+                ZipFile.ExtractToDirectory($"../../../Data/creditcardfraud.zip", Path);
+            }
+
 
             // Create a new environment for ML.NET operations.
             // It can be used for exception tracking and logging, 
@@ -27,137 +35,78 @@ namespace AnomalyDetection.Train
 
             // Create the reader: define the data columns 
             // and where to find them in the text file.
-            var reader = TextLoader.CreateReader(env, 
-                ctx => (                     
-                    Features: ctx.LoadFloat(1,29), // V1...V28 + Amount
-                    Label: ctx.LoadText(30)), // Class
-                    separator: ',', hasHeader: true);
+            var reader = TextLoader.CreateReader(env,
+                            ctx => (
+                                // V1...V28 + Amount
+                                Features: ctx.LoadFloat(1, 29),
+                                // Class
+                                Label: ctx.LoadFloat(30)),
+                                separator: ',', hasHeader: true);
 
             // Now read the file 
             // (remember though, readers are lazy, so the actual 
             //  reading will happen when the data is accessed).
             var data = reader.Read(new MultiFileSource(dataPath));
 
-            // 'transformedData' is a 'promise' of data. Let's actually read it.
-            var someRows = data.AsDynamic
-                // Convert to an enumerable of user-defined type. 
-                .AsEnumerable<TransactionData>(env, reuseRowObject: false)
-                // Take a couple values as an array.
-                .Take(4).ToArray();
-
+            // lets inspect data
             ConsoleHelpers.ConsoleWriteHeader("Show 4");
-            foreach(var viewRow in someRows)
-            {            
-                Console.WriteLine($"Label: {viewRow.Label}");
-                Console.WriteLine($"Features: [0] {viewRow.Features[0]} [1] {viewRow.Features[1]} [2] {viewRow.Features[2]} ... [28] {viewRow.Features[28]}");
-                //Console.WriteLine($"Features Normalized: [0] {viewRow.FeaturesNormalizedByMeanVar[0]} [1] {viewRow.FeaturesNormalizedByMeanVar[1]} [2] {viewRow.FeaturesNormalizedByMeanVar[2]} ... [28] {viewRow.FeaturesNormalizedByMeanVar[28]}");
-            }
-            Console.WriteLine("");   
-             
+            data.AsDynamic
+                // Convert to an enumerable of user-defined type. 
+                .AsEnumerable<TransactionVectorModel>(env, reuseRowObject: false)
+                // Take a couple values as an array.
+                .Take(4)
+                .ToList()
+                // print to console
+                .ForEach(row => { row.PrintToConsole(); });
+
             // Step two: define the learning pipeline. 
 
             // We know that this is a regression task, so we create a regression context: it will give us the algorithms
             // we need, as well as the evaluation procedure.
-            var classification = new MulticlassClassificationContext(env);
-            
+            var classification = new RegressionContext(env);
 
-            // Start creating our processing pipeline. 
-            var learningPipeline = reader.MakeNewEstimator()                      
-                   .Append(row => ( 
-                      FeaturesNormalizedByMeanVar : row.Features.NormalizeByMeanVar(), // normalize values
-                      Label : row.Label.ToKey()))
-                   .Append(row => ( 
-                           row.Label , 
-                           Predictions :  classification.Trainers.Sdca(row.Label, features: row.FeaturesNormalizedByMeanVar )));
-            
-            // Split the data 80:20 into train and test sets, train and evaluate.
-            var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2);
+            var learningPipeline = reader.MakeNewEstimator()
+                   // normalize values
+                   .Append(row => (
+                            FeaturesNormalizedByMeanVar: row.Features.NormalizeByMeanVar(),
+                            row.Label))
+                   .Append(row => (
+                            row.Label,
+                            Predictions: classification.Trainers.Sdca( row.Label, row.FeaturesNormalizedByMeanVar)
+                   )
+                );
 
             // Step three: Train the model.
-            var model = learningPipeline.Fit(trainData);
-            // Compute quality metrics on the test set.
-            var metrics = classification.Evaluate(model.Transform(testData), row => row.Label ,row => row.Predictions);
+            // Split the data 80:20 into train and test sets, train and evaluate.
+            var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2, stratificationColumn: row => row.Label );
 
+
+            var model = learningPipeline.Fit(trainData);
+
+            // Compute quality metrics on the test set.
 
             ConsoleHelpers.ConsoleWriteHeader("Train Metrics (80/20) :");
-            Console.WriteLine($"Acuracy Macro: {metrics.AccuracyMacro}");
-            Console.WriteLine($"Acuracy Micro: {metrics.AccuracyMicro}");
-            Console.WriteLine($"Log Loss: {metrics.LogLoss}");
-            Console.WriteLine($"Log Loss Reduction: {metrics.LogLossReduction}");
-
-
-
-            // Now run the 5-fold cross-validation experiment, using the same pipeline.
-            var cvResults = classification.CrossValidate(data, learningPipeline, r => r.Label, numFolds: 5);
-
-            // The results object is an array of 5 elements. For each of the 5 folds, we have metrics, model and scored test data.
-            // Let's compute the average micro-accuracy.
+            var metrics = classification.Evaluate(model.Transform(testData), row => row.Label, row => row.Predictions);
+            metrics.ToConsole();
             
-            var cvmetrics = cvResults.Select(r => r.metrics);
+
+            // Now run the n-fold cross-validation experiment, using the same pipeline.
+            int numFolds = 5;
+            var cvResults = classification.CrossValidate(trainData, learningPipeline, r => r.Label, numFolds: numFolds);
+
+            // Let's get Cross Validate metrics           
             int count = 1;
-            foreach(var metric in cvmetrics){
-                ConsoleHelpers.ConsoleWriteHeader($"Train Metrics Cross Validate [{count}/5]:");
-                Console.WriteLine($"Acuracy Macro: {metrics.AccuracyMacro}");    
-                Console.WriteLine($"Acuracy Micro: {metrics.AccuracyMicro}");
-                Console.WriteLine($"Log Loss: {metrics.LogLoss}");
-                Console.WriteLine($"Log Loss Reduction: {metrics.LogLossReduction}"); 
-                Console.WriteLine("");  
-                count++;             
-            }
-        }
-    }
+            var cvModels = cvResults.ToList();
 
-    public class TransactionData
-    {
-        public string Label;
-        public float[] Features;
-    }
-
-    public class TransactionNormalizedData
-    {
-        public string Label;
-        public float[] Features;
-        public float[] FeaturesNormalizedByMeanVar;
-    }
-
-    public static class ConsoleHelpers
-    {
-        public static void ConsoleWriteHeader(params string[] lines)
-        {
-            var defaultColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(" ");
-            foreach (var line in lines)
+            cvModels.ForEach(result =>
             {
-                Console.WriteLine(line);
-            }
-            var maxLength = lines.Select(x => x.Length).Max();
-            Console.WriteLine(new String('#', maxLength));
-            Console.ForegroundColor = defaultColor;
-        }
-
-        public static void ConsolePressAnyKey()
-        {
-            var defaultColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(" ");
-            Console.WriteLine("Press any key to finish.");
-            Console.ReadKey();
-        }
-
-        public static void ConsoleWriteException(params string[] lines)
-        {
-            var defaultColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            const string exceptionTitle = "EXCEPTION";
-            Console.WriteLine(" ");
-            Console.WriteLine(exceptionTitle);
-            Console.WriteLine(new String('#', exceptionTitle.Length));
-            Console.ForegroundColor = defaultColor;
-            foreach (var line in lines)
-            {
-                Console.WriteLine(line);
-            }
+                ConsoleHelpers.ConsoleWriteHeader($"Train Metrics Cross Validate [{count++}/{numFolds}]:");
+                classification.Evaluate(result.model.Transform(testData), row => row.Label, row => row.Predictions);
+                metrics.ToConsole();
+            });
+            
+            ConsoleHelpers.ConsolePressAnyKey();
         }
     }
+
 }
