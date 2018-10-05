@@ -40,7 +40,7 @@ namespace AnomalyDetection.Train
                                 // V1...V28 + Amount
                                 Features: ctx.LoadFloat(1, 29),
                                 // Class
-                                Label: ctx.LoadFloat(30)),
+                                Label: ctx.LoadBool(30)),
                                 separator: ',', hasHeader: true);
 
             // Now read the file 
@@ -53,8 +53,19 @@ namespace AnomalyDetection.Train
             data.AsDynamic
                 // Convert to an enumerable of user-defined type. 
                 .AsEnumerable<TransactionVectorModel>(env, reuseRowObject: false)
+                .Where(x=>x.Label == true)
                 // Take a couple values as an array.
-                .Take(4)
+                .Take(2)
+                .ToList()
+                // print to console
+                .ForEach(row => { row.PrintToConsole(); });
+
+            data.AsDynamic
+                // Convert to an enumerable of user-defined type. 
+                .AsEnumerable<TransactionVectorModel>(env, reuseRowObject: false)
+                .Where(x => x.Label == false)
+                // Take a couple values as an array.
+                .Take(2)
                 .ToList()
                 // print to console
                 .ForEach(row => { row.PrintToConsole(); });
@@ -63,7 +74,7 @@ namespace AnomalyDetection.Train
 
             // We know that this is a regression task, so we create a regression context: it will give us the algorithms
             // we need, as well as the evaluation procedure.
-            var classification = new RegressionContext(env);
+            var classification = new BinaryClassificationContext(env);
 
             var learningPipeline = reader.MakeNewEstimator()
                    // normalize values
@@ -78,7 +89,8 @@ namespace AnomalyDetection.Train
 
             // Step three: Train the model.
             // Split the data 80:20 into train and test sets, train and evaluate.
-            var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2, stratificationColumn: row => row.Label );
+            var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2);
+            //var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2, stratificationColumn: row => row.Label);
 
 
             var model = learningPipeline.Fit(trainData);

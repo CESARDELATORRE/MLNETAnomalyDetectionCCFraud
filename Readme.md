@@ -14,7 +14,7 @@ By: Andrea Dal Pozzolo, Olivier Caelen, Reid A. Johnson and Gianluca Bontempi. C
 
 ## Problem
 
-## ML Task - 
+## ML Task - Binary Classification
 
 -  
 

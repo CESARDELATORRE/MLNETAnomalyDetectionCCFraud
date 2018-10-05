@@ -4,7 +4,7 @@ namespace AnomalyDetection.Train.DataModels
 {
     public class TransactionVectorModel
     {
-        public float Label;
+        public bool Label;
         public float[] Features;
 
         public void PrintToConsole() {
