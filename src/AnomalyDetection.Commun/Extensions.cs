@@ -1,12 +1,15 @@
-﻿using Microsoft.ML.Runtime.Data;
+﻿using Microsoft.ML.Core.Data;
+using Microsoft.ML.Runtime.Data;
 using System;
+using System.Collections.Generic;
+using System.IO;
 
-namespace AnomalyDetection.Train.Helpers
+namespace AnomalyDetection.Commun
 {
     public static class ConsoleExtensions
     {
 
-        public static void ToConsole(this Microsoft.ML.Runtime.Data.MultiClassClassifierEvaluator.Result result)
+        public static void ToConsole(this MultiClassClassifierEvaluator.Result result)
         {
             Console.WriteLine($"Acuracy macro: {result.AccuracyMacro}");
             Console.WriteLine($"Acuracy micro: {result.AccuracyMicro}");
@@ -45,5 +48,34 @@ namespace AnomalyDetection.Train.Helpers
             Console.WriteLine($"Root mean square of the L2 loss: {result.Rms}");
             Console.WriteLine($"R scuared: {result.RSquared}");
         }
+
+        public static IEnumerable<string> GetColumnNames(this ISchema schema)
+        {
+            for (int i = 0; i < schema.ColumnCount; i++)
+            {
+                if (!schema.IsHidden(i))
+                    yield return schema.GetColumnName(i);
+            }
+        }
+
+        public static void SaveModel(this ITransformer model, LocalEnvironment env, string modelSavePath)
+        {
+            using (var stream = File.Create(modelSavePath))
+            {
+                // Saving and loading happens to 'dynamic' models, so the static typing is lost in the process.
+                model.SaveTo(env, stream);
+            }
+        }
+
+        public static ITransformer ReadModel(this LocalEnvironment env, string modelLocation)
+        {
+            ITransformer model;
+            using (var file = File.OpenRead(@modelLocation))
+            {
+                model = TransformerChain.LoadFrom(env, file);
+            }
+            return model;
+        }
     }
+
 }

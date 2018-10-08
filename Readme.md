@@ -39,7 +39,7 @@ tbd
 `````csharp
     var classification = new BinaryClassificationContext(env);
 
-    var learningPipeline = reader.MakeNewEstimator()
+    var estimator = reader.MakeNewEstimator()
             // normalize values
             .Append(row => (
                     FeaturesNormalizedByMeanVar: row.Features.NormalizeByMeanVar(),
@@ -56,7 +56,7 @@ tbd
     var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2);
 
 
-    var model = learningPipeline.Fit(trainData);
+    var model = estimator.Fit(trainData);
 `````
 
 ### 3. Evaluate model
