@@ -23,7 +23,7 @@ namespace AnomalyDetection.Predictor
             var env = new LocalEnvironment(seed);
 
             DirectoryInfo directoryInfo = new DirectoryInfo($@"{_path}/Models/");
-            FileInfo[] filesInfo = directoryInfo.GetFiles("*.ML"); 
+            FileInfo[] filesInfo = directoryInfo.GetFiles("*.zip"); 
 
             IDataView dataTest = new RoleMappedData(new BinaryLoader(env, new BinaryLoader.Arguments(), new MultiFileSource($"{_path}SplitData/testData.data")),
                                     label: "Label",

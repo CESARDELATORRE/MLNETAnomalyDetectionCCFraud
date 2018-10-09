@@ -25,6 +25,8 @@ namespace AnomalyDetection.Train
         private IDataView _testData;
         private LocalEnvironment _env;
 
+
+        // todo all with dinamic APi
         public ModelBuilder(string path)
         {
             _path = path ?? throw new ArgumentNullException(nameof(path));
@@ -71,6 +73,8 @@ namespace AnomalyDetection.Train
                 // save ML model to disk
                 result.model.SaveModel(_env, $"{_path}Models/cv{count - 1}-fastTree.zip");
             });
+
+            // todo save with best acurracy
         }
 
         private (BinaryClassificationContext context,
