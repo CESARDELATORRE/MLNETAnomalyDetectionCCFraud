@@ -57,13 +57,6 @@ namespace AnomalyDetection.Train
 
             var model = estimator.AsDynamic.Fit(_trainData);
 
-            // Compute quality metrics on the test set.
-            //ConsoleHelpers.ConsoleWriteHeader("Train Metrics (80/20) :");
-            //var metrics = _context.Evaluate(model.Transform(_testData), "Label");
-            //metrics.ToConsole();
-            //// save ML model to disk
-            //model.SaveModel(_env, $"{_path}Models/fastTree.ML");
-
             // Now run the n-fold cross-validation experiment, using the same pipeline.
             var cvResults = _context.CrossValidate(_trainData, estimator.AsDynamic, labelColumn: "Label", numFolds: numFolds);
             // Let's get Cross Validate metrics           
@@ -76,7 +69,7 @@ namespace AnomalyDetection.Train
                 ConsoleHelpers.InspectScoredData(_env, result.scoredTestData);
 
                 // save ML model to disk
-                result.model.SaveModel(_env, $"{_path}Models/cv{count - 1}-fastTree.ML");
+                result.model.SaveModel(_env, $"{_path}Models/cv{count - 1}-fastTree.zip");
             });
         }
 

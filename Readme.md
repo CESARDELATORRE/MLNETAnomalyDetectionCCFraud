@@ -14,14 +14,16 @@ By: Andrea Dal Pozzolo, Olivier Caelen, Reid A. Johnson and Gianluca Bontempi. C
 
 ## Problem
 
-## ML Task - Binary Classification
+## ML Task - [Binary Classification](https://en.wikipedia.org/wiki/Binary_classification)
 
--  
+Binary or binomial classification is the task of classifying the elements of a given set into two groups (predicting which group each one belongs to) on the basis of a classification rule. Contexts requiring a decision as to whether or not an item has some qualitative property, some specified characteristic
+  
 
 ## Solution
 tbd
 
 ### 1. Build model
+tbd
 
 `````csharp
    // Load Model
@@ -35,6 +37,7 @@ tbd
 `````
 
 ### 2. Train model
+tbd
 
 `````csharp
     var classification = new BinaryClassificationContext(env);
@@ -50,17 +53,48 @@ tbd
             )
         );
 
-    // [...]
+    [...]
 
     // Split the data 80:20 into train and test sets, train and evaluate.
     var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2);
-
-
     var model = estimator.Fit(trainData);
 `````
 
 ### 3. Evaluate model
 tbd
 
+`````csharp
+[...]
+    var cvResults = _context.CrossValidate(_trainData, estimator.AsDynamic, labelColumn: "Label", numFolds: numFolds);
+    // Let's get Cross Validate metrics           
+    int count = 1;
+    var cvModels = cvResults.ToList();
+    cvModels.ForEach(result =>
+    {
+        ConsoleHelpers.ConsoleWriteHeader($"Train Metrics Cross Validate [{count++}/{numFolds}]:");
+        result.metrics.ToConsole();
+        ConsoleHelpers.InspectScoredData(_env, result.scoredTestData);
+        // save ML model to disk
+        result.model.SaveModel(_env, $"{_path}Models/cv{count - 1}-fastTree.ML");
+    });
+[...]
+`````
+
 ### 4. Consume model
 tbd
+
+`````csharp
+[...]
+    ITransformer model = env.ReadModel(fileInfo.FullName);
+    var predictionFunc = model.MakePredictionFunction<TransactionVectorModel, TransactionEstimatorModel>(env);
+    ConsoleHelpers.ConsoleWriterSection($"Evaluate Data (should be predicted true):");
+    dataTest.AsEnumerable<TransactionVectorModel>(env, reuseRowObject: false)
+            .Where(x => x.Label == true)
+            .Take(4)
+            .Select(testData => testData)
+            .ToList()
+            .ForEach(testData => {
+                predictionFunc.Predict(testData).PrintToConsole();
+            });
+[...]
+`````
