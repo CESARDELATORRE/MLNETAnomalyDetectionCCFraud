@@ -1,10 +1,12 @@
-﻿using AnomalyDetection.Commun.DataModels;
+﻿using AnomalyDetection.Common.DataModels;
 using Microsoft.ML.Runtime.Api;
 using Microsoft.ML.Runtime.Data;
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 
-namespace AnomalyDetection.Commun
+namespace AnomalyDetection.Common
 {
     public static class ConsoleHelpers
     {
@@ -60,6 +62,39 @@ namespace AnomalyDetection.Commun
             }
         }
 
+        public static void ConsoleWriteWarning(params string[] lines)
+        {
+            var defaultColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            const string warningTitle = "WARNING";
+            Console.WriteLine(" ");
+            Console.WriteLine(warningTitle);
+            Console.WriteLine(new string('#', warningTitle.Length));
+            Console.ForegroundColor = defaultColor;
+            foreach (var line in lines)
+            {
+                Console.WriteLine(line);
+            }
+        }
+
+        public static string GetAssetsPath(params string[] paths)
+        {
+
+            FileInfo _dataRoot = new FileInfo(typeof(ConsoleHelpers).Assembly.Location);
+            if (paths == null || paths.Length == 0)
+                return null;
+
+            return Path.Combine(paths.Prepend(_dataRoot.Directory.FullName).ToArray());
+        }
+
+        public static string DeleteAssets(params string[] paths)
+        {
+            var location = GetAssetsPath(paths);
+
+            if (!string.IsNullOrWhiteSpace(location) && File.Exists(location))
+                File.Delete(location);
+            return location;
+        }
 
         public static void InspectData(LocalEnvironment env, IDataView data)
         {
@@ -101,6 +136,15 @@ namespace AnomalyDetection.Commun
                .ToList()
                // print to console
                .ForEach(row => { row.PrintToConsole(); });
+        }
+
+        public static void UnZipDataSet(string zipDataSet, string destinationFile)
+        {
+            if (!File.Exists(destinationFile))
+            {
+                var destinationDirectory = Path.GetDirectoryName(destinationFile);
+                ZipFile.ExtractToDirectory(zipDataSet, $"{destinationDirectory}");
+            }
         }
     }
 

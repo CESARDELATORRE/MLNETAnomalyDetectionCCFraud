@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace AnomalyDetection.Commun
+namespace AnomalyDetection.Common
 {
     public static class ConsoleExtensions
     {

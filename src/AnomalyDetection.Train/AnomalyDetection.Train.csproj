@@ -9,12 +9,14 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.ML" Version="$(MicrosoftMLVersion)" /> 
   </ItemGroup>
-
+  
   <ItemGroup>
-    <Folder Include="Data\" />
+    <ProjectReference Include="..\AnomalyDetection.Common\AnomalyDetection.Common.csproj" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <ProjectReference Include="..\AnomalyDetection.Commun\AnomalyDetection.Commun.csproj" />
+    <Folder Include="assets\input\" />
+    <Folder Include="assets\output\" />
   </ItemGroup>
+  
 </Project>
