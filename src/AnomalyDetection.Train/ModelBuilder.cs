@@ -188,12 +188,8 @@ namespace AnomalyDetection.Train
             //    separator: ',');
 
             // Now read the file 
-            var data = reader.Read(new MultiFileSource($"{_path}{_fileName}"));
-            // (remember though, readers are lazy, so the actual 
-            //  reading will happen when the data is accessed).
+            IDataView data = null;
 
-            ConsoleHelpers.ConsoleWriteHeader("Show 4 (source)");
-            ConsoleHelpers.InspectData(env, data);
 
             // We know that this is a Binary Classification task,
             // so we create a Binary Classification context:
@@ -207,6 +203,12 @@ namespace AnomalyDetection.Train
             // Step 2: split Data
             if (!Directory.Exists($"{_path}SplitData/"))
             {
+                data = reader.Read(new MultiFileSource($"{_path}{_fileName}"));
+                // (remember though, readers are lazy, so the actual 
+                //  reading will happen when the data is accessed).
+
+                ConsoleHelpers.ConsoleWriteHeader("Show 4 (source)");
+                ConsoleHelpers.InspectData(env, data);
 
                 // Split the data 80:20 into train and test sets, train and evaluate.
 
