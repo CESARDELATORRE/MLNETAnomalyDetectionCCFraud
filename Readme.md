@@ -1,4 +1,4 @@
-# Customer Segmentation - Clustering sample
+# Fraud detection in credit cards - Anomaly detection
 
 ## DataSet
 
