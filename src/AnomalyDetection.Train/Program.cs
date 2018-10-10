@@ -4,6 +4,7 @@ using Microsoft.ML.Runtime.Data;
 using Microsoft.ML.Trainers;
 using System.Linq;
 using System.IO;
+using Microsoft.ML.Runtime.Data.IO;
 
 namespace AnomalyDetection.Train
 {
@@ -18,8 +19,8 @@ namespace AnomalyDetection.Train
 
             ConsoleHelpers.UnZipDataSet(zipDataSet, dataSetFile);
 
-            TrainModelWithStaticApi(assetsPath, dataSetFile);
-            //TrainModelWithDynamicApi(assetsPath, dataSetFile);
+            TrainModelWithDynamicApi(assetsPath, dataSetFile);
+            //TrainModelWithStaticApi(assetsPath, dataSetFile);
 
             ConsoleHelpers.ConsolePressAnyKey();
         }
@@ -89,6 +90,28 @@ namespace AnomalyDetection.Train
 
             // Split the data 80:20 into train and test sets, train and evaluate.
             var (trainData, testData) = classification.TrainTestSplit(data, testFraction: 0.2);
+
+            if (!File.Exists(Path.Combine(outputPath, "testData.idv"))) {
+                // save test split
+                using (var ch = env.Start("SaveData"))
+                using (var file = env.CreateOutputFile(Path.Combine(outputPath, "testData.idv")))
+                {
+                    var saver = new BinarySaver(env, new BinarySaver.Arguments());
+                    DataSaverUtils.SaveDataView(ch, saver, testData.AsDynamic, file);
+                }
+            }
+
+            if (!File.Exists(Path.Combine(outputPath, "trainData.idv")))
+            {
+                // save train split
+                using (var ch = env.Start("SaveData"))
+                using (var file = env.CreateOutputFile(Path.Combine(outputPath, "trainData.idv")))
+                {
+                    var saver = new BinarySaver(env, new BinarySaver.Arguments());
+                    DataSaverUtils.SaveDataView(ch, saver, trainData.AsDynamic, file);
+                }
+            }
+
 
             // Start creating our processing pipeline. 
             var estimator = reader.MakeNewEstimator()
