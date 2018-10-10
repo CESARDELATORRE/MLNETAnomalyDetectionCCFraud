@@ -64,7 +64,7 @@ namespace AnomalyDetection.Commun
         public static void InspectData(LocalEnvironment env, IDataView data)
         {
             // lets inspect data
-            ConsoleWriteHeader("Show 4");
+            //ConsoleWriteHeader("Show 4");
             ShowVectorModel(env, data, label: true);
             ShowVectorModel(env, data, label: false);
         }
@@ -72,7 +72,7 @@ namespace AnomalyDetection.Commun
         public static void InspectScoredData(LocalEnvironment env, IDataView data)
         {
             // lets inspect data
-            ConsoleWriteHeader("Show 4");
+            //ConsoleWriteHeader("Show 4");
             ShowEstimatorModel(env, data, label: true);
             ShowEstimatorModel(env, data, label: false);
         }
