@@ -110,7 +110,7 @@ namespace AnomalyDetection.Train
             var model = estimator.Fit(trainData);
 
             // Now run the n - fold cross - validation experiment, using the same pipeline.
-            int numFolds = 5;
+            int numFolds = 2;
             var cvResults = classification.CrossValidate(trainData, estimator, r => r.Label, numFolds: numFolds);
 
             // Let's get Cross Validate metrics           

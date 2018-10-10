@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="assets\output\.gitignore" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.ML" Version="$(MicrosoftMLVersion)" /> 
   </ItemGroup>
   
@@ -24,6 +20,7 @@
   
   <ItemGroup>
     <Folder Include="assets\input\" />
+    <Folder Include="assets\output\" />
   </ItemGroup>
   
 </Project>

@@ -48,7 +48,7 @@ namespace AnomalyDetection.Train
             return this;
         }
 
-        public void TrainFastTreeAndSaveModels( int cvNumFolds = 5, int numLeaves= 20 , int numTrees = 100,
+        public void TrainFastTreeAndSaveModels( int cvNumFolds = 2, int numLeaves= 20 , int numTrees = 100,
                                                 int minDocumentsInLeafs = 10, double learningRate = 0.2,
                                                 Action<Arguments> advancedSettings = null)
         {
