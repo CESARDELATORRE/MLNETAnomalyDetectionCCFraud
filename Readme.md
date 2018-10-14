@@ -1,4 +1,4 @@
-# Fraud detection in credit cards - Anomaly detection
+# Fraud detection in credit cards - Anomaly detection based on binary classification and PCA
 
 ## DataSet
 
