@@ -68,8 +68,6 @@ namespace AnomalyDetection.Train
                                                     minDocumentsInLeafs : 10,
                                                     learningRate: 0.2));
             
-            var model = estimator.Fit(_trainData);
-
 
             // Now run the n-fold cross-validation experiment, using the same pipeline.
             // Can't do stratification when column type is a boolean
@@ -188,7 +186,7 @@ namespace AnomalyDetection.Train
             }
             else {
                 // Load splited data
-                var binTrainData = new BinaryLoader(env, new BinaryLoader.Arguments(), new MultiFileSource(Path.Combine(_outputPath, "testData.idv")));
+                var binTrainData = new BinaryLoader(env, new BinaryLoader.Arguments(), new MultiFileSource(Path.Combine(_outputPath, "trainData.idv")));
                 var trainRoles = new RoleMappedData(binTrainData, roles: TransactionVectorModel.Roles());
                 trainData = trainRoles.Data;
 
