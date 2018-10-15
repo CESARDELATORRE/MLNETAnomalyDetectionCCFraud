@@ -3,7 +3,7 @@
 In this introductory sample, you'll see how to use ML.NET to predict a credit card fraud. In the world of machine learning, this type of prediction is known as binary classification.
 
 ## API version: Dynamic and Estimators-based API
-It is important to note that this sample uses the dynamic API with Estimators, there is also a code example using the static api.
+It is important to note that this sample uses the dynamic API with Estimators, there is also a [code example](src/AnomalyDetection.Train/Program.cs#L34) using the static api.
 
 ## Problem
 This problem is centered around predicting if credit card transaction i sa fraud or no. We will use a [dataset](https://www.kaggle.com/mlg-ulb/creditcardfraud) from Worldline and the Machine Learning Group (http://mlg.ulb.ac.be) of ULB (Université Libre de Bruxelles) collected and analysed during a research collaboration.  
@@ -16,7 +16,7 @@ Feature 'Time' contains the seconds elapsed between each transaction and the fir
 
 The dataset is highly unbalanced, the positive class (frauds) account for 0.172% of all transactions.
 
-Using those datasets we will build a model that when predicting it will analyze a transaction and predict a fraud value of 0 or 1.
+Using those datasets we will build a model that when predicting it will analyze a transaction and predict a fraud value of false or true.
 
 ## DataSet
 
@@ -33,7 +33,7 @@ Binary or binomial classification is the task of classifying the elements of a g
 
 ## Solution
 
-To solve this problem, first we will build an ML model. Then we will train the model on existing data, evaluate how good it is, and lastly we'll consume the model to predict a fraud for a transactions.
+To solve this problem, first we will build an ML model. Then we will train the model on existing data, evaluate how good it is, and lastly we'll consume the model to predict a fraud for a crdit card transaction.
 
 ![Build -> Train -> Evaluate -> Consume](https://raw.githubusercontent.com/dotnet/machinelearning-samples/features/samples-new-api/samples/csharp/getting-started/shared_content/modelpipeline.png)
 
@@ -156,7 +156,7 @@ We need this step to conclude how accurate our model is. To do so, inspect resul
 `````
 
 ### 4. Consume model
-After the model is trained, you can use the Predict() API to predict if a transaction is a fraud, using a data set.
+After the model is trained, you can use the Predict() API to predict if a transaction is a fraud, using a IDataSet.
 
 `````csharp
 [...]
